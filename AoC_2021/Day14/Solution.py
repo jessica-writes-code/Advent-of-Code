@@ -1,12 +1,13 @@
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
+
 def parse_puzzle_input(puzzle_input: List[str]) -> Tuple[str, Dict[str, str]]:
     template = puzzle_input[0]
-    
+
     rules = {}
     for i in range(2, len(puzzle_input)):
-        k, v = puzzle_input[i].split(' -> ')
+        k, v = puzzle_input[i].split(" -> ")
         rules[k] = v
 
     return template, rules
@@ -15,7 +16,7 @@ def parse_puzzle_input(puzzle_input: List[str]) -> Tuple[str, Dict[str, str]]:
 def pairs_from_template(x: str) -> Dict[str, int]:
     d = defaultdict(int)
     for i in range(0, len(x) - 1):
-        d[x[i:i+2]] += 1
+        d[x[i : i + 2]] += 1
     return dict(d)
 
 
@@ -25,11 +26,13 @@ def run_step(count_dict: Dict[str, int], rules: Dict[str, str]) -> Dict[str, int
         first_pair = k[0] + rules[k]
         new_count_dict[first_pair] += v
         second_pair = rules[k] + k[1]
-        new_count_dict[second_pair] += v      
+        new_count_dict[second_pair] += v
     return dict(new_count_dict)
 
 
-def letter_count_from_pair_count(pair_count: Dict[str, int], template: str) -> Dict[str, int]:
+def letter_count_from_pair_count(
+    pair_count: Dict[str, int], template: str
+) -> Dict[str, int]:
     letter_count_dict = defaultdict(int)
     for k, v in pair_count.items():
         letter_count_dict[k[0]] += v
