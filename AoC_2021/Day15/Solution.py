@@ -14,7 +14,7 @@ def solve(risk_levels: np.ndarray, part2=False) -> int:
             for j in range(5):
                 tile_i_j = risk_levels + i + j
                 tile_i_j = tile_i_j % 9
-                tile_i_j[tile_i_j == 0] = 9 
+                tile_i_j[tile_i_j == 0] = 9
                 tiles_i.append(tile_i_j)
             tiles.append(np.hstack(tiles_i))
         risk_levels = np.vstack(tiles)
@@ -29,7 +29,9 @@ def solve(risk_levels: np.ndarray, part2=False) -> int:
         if y == len(risk_levels) - 1 and x == len(risk_levels[y]) - 1:
             return c
         for x1, y1 in ((x - 1, y), (x, y - 1), (x, y + 1), (x + 1, y)):
-            if y1 not in range(risk_levels.shape[1]) or x1 not in range(risk_levels.shape[0]):
+            if y1 not in range(risk_levels.shape[1]) or x1 not in range(
+                risk_levels.shape[0]
+            ):
                 continue
             d = c + risk_levels[y1][x1]
             if d < lowest_costs[y1][x1]:
