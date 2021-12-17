@@ -40,7 +40,8 @@ def find_end_point(
 def solve(target_area: TargetArea):
     successes = []
     for velocity_x in range(target_area.x_max + 1):
-        for velocity_y in range(target_area.y_min, abs(target_area.y_min)):  # TODO: Fix
+        tmp = max(abs(target_area.y_min), abs(target_area.y_max))
+        for velocity_y in range(-tmp, tmp):
             # Get the end point, with this initial x-velocity, y-velocity
             end_point_x, end_point_y, max_y = find_end_point(
                 velocity_x, velocity_y, target_area
