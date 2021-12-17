@@ -51,7 +51,7 @@ def solve(target_area: TargetArea):
             if target_area.contains(end_point_x, end_point_y):
                 successes.append((velocity_x, velocity_y, max_y))
 
-    return max([x[2] for x in successes]), len(successes)   
+    return max([x[2] for x in successes]), len(successes)
 
 
 print(solve(TargetArea(x_min=288, x_max=330, y_min=-96, y_max=-50)))
