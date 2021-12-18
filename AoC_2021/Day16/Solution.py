@@ -1,5 +1,8 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 
+import numpy as np
+
+# Maps
 hex_to_binary_map = {
     "0": "0000",
     "1": "0001",
@@ -18,7 +21,6 @@ hex_to_binary_map = {
     "E": "1110",
     "F": "1111",
 }
-binary_to_hex_map = {v: k for k, v in hex_to_binary_map.items()}
 
 
 def hex_to_binary(str) -> str:
@@ -29,92 +31,106 @@ def hex_to_binary(str) -> str:
     return "".join(new_list)
 
 
-def get_possible_numbers(binary_str: str):
-    possible_literals = []
-    for k, v in binary_to_hex_map.items():
-        k_lstrip = k.lstrip("0")
-        if len(k_lstrip) > 0 and binary_str.startswith(k_lstrip):
-            try:
-                float(v)
-                possible_literals.append((v, k_lstrip))
-            except:
-                pass
-    return possible_literals
+def parse_literal(literal: str) -> int:
+    groups, is_end = [], False
+    while not is_end:
+        segment = literal[0:5]
+        literal = literal[5:]
+        if int(segment[0]) == 0:
+            is_end = True
+        groups.append(segment[1:])
+    return int("".join(groups), 2), literal
 
 
-def get_literal(binary_str: str) -> Optional[str]:
+def parse_operator(packet: str, length_type_id: int):
+    if length_type_id == 0:
+        length_of_subpackets = int(packet[0:15], 2)
+        packet = packet[15:]
+        contents, _ = parse_packets(packet[0:length_of_subpackets])
+        packet = packet[length_of_subpackets:]
+    elif length_type_id == 1:
+        number_of_subpackets = int(packet[0:11], 2)
+        packet = packet[11:]
+        contents, packet = parse_packets(packet, number_of_subpackets)
+    else:
+        raise ValueError
 
-    # Divide into groups of 5 bits
-    bit_segments = []
-    for i in range(0, len(binary_str), 5):
-        bit_segments.append(binary_str[i:i+5])
+    return contents, packet
 
-    # Remove final segment if it's buffer
-    if len(bit_segments[-1]) < 5:
-        bit_segments.pop()
 
-    # Parse divided segments into literal values
-    literal_segments = []
-    for i, segment in enumerate(bit_segments):
-        if i == len(bit_segments) - 1:
-            # Anything other than 0s in a non-5-bit final segment
-            if len(segment) < 5 and '1' in segment:
-                return None
+def get_numeric_prefix(packet: str, num_chars: int) -> Tuple[int, str]:
+    chars = packet[0:num_chars]
+    return int(chars, 2), packet[num_chars:]
 
-            # Final segment doesn't start with 0
-            if not segment.startswith('0'):
-                return None
 
+def parse_packets(packet: str, total_num_packets: int = None):
+    parsed_packets, is_end = [], False
+    while not is_end:
+        version, packet = get_numeric_prefix(packet, 3)
+        type_id, packet = get_numeric_prefix(packet, 3)
+
+        if type_id == 4:
+            content, packet = parse_literal(packet)
         else:
-            # Non-final segment doesn't start with 1
-            if not segment.startswith('1'):
-                return None 
+            length_type_id, packet = get_numeric_prefix(packet, 1)
+            content, packet = parse_operator(packet, length_type_id)
 
-        literal_segments.append(segment[1:])
+        parsed_packets.append((version, type_id, content))
 
-    literal = ''.join(literal_segments)
-    return int(literal, 2)
+        if (
+            len(parsed_packets) == total_num_packets
+            or len(packet.replace("0", "")) == 0
+        ):
+            is_end = True
 
-
-def parse_packet(
-    packet: str,
-    version: Optional[str] = None,
-    type_id: Optional[str] = None,
-    value: Optional[str] = None,
-):
-
-    # If no version has been identified yet...
-    if version is None:
-        for v_hex, v_binary in get_possible_numbers(packet):
-            packet_substr = packet[len(v_binary) :]
-            version, type_id, value = parse_packet(packet_substr, version=v_hex)
-            if value is not None:
-                break
-        return version, type_id, value
-
-    if type_id is None:
-        for t_hex, t_binary in get_possible_numbers(packet):
-            packet_substr = packet[len(t_binary) :]
-            version, type_id, value = parse_packet(
-                packet_substr, version=version, type_id=t_hex
-            )
-            if value is not None:
-                break
-        return version, type_id, value
-
-    value = get_literal(packet)
-    return version, type_id, value
+    return parsed_packets, packet
 
 
-def part1(puzzle_input: str) -> int:
-    binary_representation = hex_to_binary(puzzle_input)
-    version, type_id, value = parse_packet(binary_representation)
-    import pdb
+def part1(puzzle_input):
+    parsed_packet, _ = parse_packets(hex_to_binary(puzzle_input), 1)
+    version_numbers = []
+    while len(parsed_packet) > 0:
+        el = parsed_packet.pop()
+        version_numbers.append(el[0])
+        if isinstance(el[2], list):
+            parsed_packet.extend(el[2])
+    return sum(version_numbers)
 
-    pdb.set_trace()
+
+def perform_operations(parsed_packet):
+    type_id = parsed_packet[1]
+
+    if type_id == 4:
+        return parsed_packet[2]
+
+    values = []
+    for el in parsed_packet[2]:
+        values.append(perform_operations(el))
+    
+    print(values)
+    if type_id == 0:
+        return sum(values)
+    if type_id == 1:
+        return np.prod(values)
+    if type_id == 2:
+        return min(values)
+    if type_id == 3:
+        return max(values)
+    if type_id == 5:
+        return values[0] > values[1]
+    if type_id == 6:
+        return values[0] < values[1]
+    if type_id == 7:
+        return values[0] == values[1]
+
+
+def part2(puzzle_input):
+    parsed_packet, _ = parse_packets(hex_to_binary(puzzle_input), 1)
+    return perform_operations(parsed_packet[0])
 
 
 with open("./Day16Input.txt") as f:
     puzzle_input = f.read().strip()
 
 print(part1(puzzle_input))
+print(part2(puzzle_input))
