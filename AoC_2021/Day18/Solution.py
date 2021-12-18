@@ -9,57 +9,106 @@ def find_next_num_loc(snailfish_number: str, backward=False):
     for i in range(start, end, step):
         el = snailfish_number[i]
         if el.isnumeric():
-            return i
+            if backward is False:
+                j = i
+                while snailfish_number[j].isnumeric():
+                    j += 1
+            else:
+                j = i + 1
+                while snailfish_number[i - 1].isnumeric():
+                    i -= 1
+            return i, j
 
 
-def explode(snailfish_number: str) -> Tuple[int, int]:
+def sf_explode(snailfish_number: str) -> str:
+    print("Explode")
     open_brackets_count = 0
     for i, el in enumerate(snailfish_number):
-        if el == '[':
+        if el == "[":
             open_brackets_count += 1
             if open_brackets_count == 5:
                 if snailfish_number[i + 1].isnumeric():
-                    idx_s, idx_e = i, i + 5
+                    idx_s, idx_e = i, snailfish_number.find("]", i) + 1
                     pre, post = snailfish_number[:idx_s], snailfish_number[idx_e:]
-                    x, y = json.loads(snailfish_number[idx_s: idx_e])
+                    x, y = json.loads(snailfish_number[idx_s:idx_e])
 
                     left_num_loc = find_next_num_loc(pre, backward=True)
                     if left_num_loc is not None:
-                        new_num = x + int(pre[left_num_loc])
-                        pre = pre[0:left_num_loc] + str(new_num) + pre[left_num_loc+1:]
-                    
+                        new_num = x + int(pre[left_num_loc[0]:left_num_loc[1]])
+                        pre = (
+                            pre[0:left_num_loc[0]] + str(new_num) + pre[left_num_loc[1] :]
+                        )
+
                     right_num_loc = find_next_num_loc(post)
                     if right_num_loc is not None:
-                        new_num = y + int(post[right_num_loc])
-                        post = post[0:right_num_loc] + str(new_num) + post[right_num_loc+1:]
+                        new_num = y + int(post[right_num_loc[0]:right_num_loc[1]])
+                        post = (
+                            post[0:right_num_loc[0]]
+                            + str(new_num)
+                            + post[right_num_loc[1] :]
+                        )
 
-                    snailfish_number = pre + '0' + post
+                    snailfish_number = pre + "0" + post
                     return snailfish_number
-        
-        elif el == ']':
+        elif el == "]":
             open_brackets_count -= 1
+    return snailfish_number
+
+
+def sf_split(snailfish_number: str) -> str:
+    print("Split")
+    for i, el in enumerate(snailfish_number[0:-1]):
+        # If we have at least a 2-digit number
+        if el.isnumeric() and snailfish_number[i + 1].isnumeric():
+            next_spot = [snailfish_number[i:].find("]"), snailfish_number[i:].find(",")]
+            idx_s, idx_e = (
+                i,
+                i + min([x for x in next_spot if x != -1]),
+            )
+            pre, post = snailfish_number[:idx_s], snailfish_number[idx_e:]
+            num = int(snailfish_number[idx_s: idx_e])
+            num_split = [round(num / 2 - 0.05), round(num / 2 + 0.05)]
+            return pre + json.dumps(num_split).replace(" ", "") + post
+    return snailfish_number
 
 
 def snailfish_reduce(snailfish_number: str) -> str:
     while True:
-        # If any pair is nested inside four pairs
-        snailfish_number = explode(snailfish_number)
-        return snailfish_number
+        print(snailfish_number)
+
+        # Explosion
+        new_snailfish_number = sf_explode(snailfish_number)
+
+        # If there was an effect, restart the process
+        # "you must repeatedly do the first action in this list that applies to the snailfish number"
+        if new_snailfish_number != snailfish_number:
+            snailfish_number = new_snailfish_number
+            continue
+
+        # Split
+        new_snailfish_number = sf_split(new_snailfish_number)
+
+        # If there was no effect, you're done
+        # "Once no action in the above list applies, the snailfish number is reduced."
+        if new_snailfish_number == snailfish_number:
+            break
+
+        snailfish_number = new_snailfish_number
+    return snailfish_number
 
 
 def snailfish_addition(to_add: List[str]) -> str:
-    current_number = ''
+    current_number = ""
     for i, el in enumerate(to_add):
-        current_number += ','
+        current_number += ","
         current_number += el
         if i == 0:
             current_number = current_number[1:]
             continue
-
+        else:
+            current_number = "[" + current_number + "]"
         current_number = snailfish_reduce(current_number)
-
-    import pdb
-    pdb.set_trace()
+    return current_number
 
 
 def find_magnitude(snailfish_number: List) -> int:
@@ -82,4 +131,4 @@ def find_magnitude(snailfish_number: List) -> int:
 with open("./Day18Input.txt") as f:
     puzzle_input = [x.strip() for x in f.readlines()]
 
-print(snailfish_reduce(puzzle_input[0]))
+print(find_magnitude(json.loads(snailfish_addition(puzzle_input))))
