@@ -1,3 +1,4 @@
+import itertools
 import json
 from typing import List, Tuple
 
@@ -21,7 +22,6 @@ def find_next_num_loc(snailfish_number: str, backward=False):
 
 
 def sf_explode(snailfish_number: str) -> str:
-    print("Explode")
     open_brackets_count = 0
     for i, el in enumerate(snailfish_number):
         if el == "[":
@@ -56,7 +56,6 @@ def sf_explode(snailfish_number: str) -> str:
 
 
 def sf_split(snailfish_number: str) -> str:
-    print("Split")
     for i, el in enumerate(snailfish_number[0:-1]):
         # If we have at least a 2-digit number
         if el.isnumeric() and snailfish_number[i + 1].isnumeric():
@@ -74,8 +73,6 @@ def sf_split(snailfish_number: str) -> str:
 
 def snailfish_reduce(snailfish_number: str) -> str:
     while True:
-        print(snailfish_number)
-
         # Explosion
         new_snailfish_number = sf_explode(snailfish_number)
 
@@ -128,7 +125,16 @@ def find_magnitude(snailfish_number: List) -> int:
     )
 
 
+def find_max_magnitude(to_add: List[str]) -> int:
+    magnitudes = []
+    for x, y in itertools.permutations(to_add, 2):
+        mag = find_magnitude(json.loads(snailfish_addition([x, y])))
+        magnitudes.append(mag)
+    return max(magnitudes)
+
+
 with open("./Day18Input.txt") as f:
     puzzle_input = [x.strip() for x in f.readlines()]
 
 print(find_magnitude(json.loads(snailfish_addition(puzzle_input))))
+print(find_max_magnitude(puzzle_input))
