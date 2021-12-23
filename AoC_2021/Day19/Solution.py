@@ -172,6 +172,16 @@ class Map:
             beacon_set = beacon_set.union(new_beacons)
         return beacon_set
 
+    def manhattan_distances(self):
+        # Get all Manhattan distances
+        distances = []
+        for i, j in itertools.combinations(range(len(self.scanners)), 2):
+            x_dist = abs(self.scanners[i].x - self.scanners[j].x)
+            y_dist = abs(self.scanners[i].y - self.scanners[j].y)
+            z_dist = abs(self.scanners[i].z - self.scanners[j].z)
+            distances.append(sum([x_dist, y_dist, z_dist]))
+        return distances
+
 
 # Load data into Beacon, Scanner, Map objects
 with open("./Day19Input.txt") as f:
@@ -194,3 +204,4 @@ while i in range(len(puzzle_input)):
 map_of_scanners = Map(scanners)
 map_of_scanners.calibrate_scanners()
 print(len(map_of_scanners.get_beacons()))
+print(max(map_of_scanners.manhattan_distances()))
