@@ -6,8 +6,9 @@ from _base import Solver
 
 @dataclass
 class InputLine:
-    """Represents a single line of the puzzle input, a policy (composed
-    of two numbers, and a letter) and a password that the policy applies to"""
+    """Represents a single line of the puzzle input, which is composed of a
+    password policy (specified by two numbers and one letter) and a password
+    that the policy applies to"""
 
     letter: str
     num1: int
