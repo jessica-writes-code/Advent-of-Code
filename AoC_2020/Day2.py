@@ -14,13 +14,13 @@ class InputLine:
     num2: int
     password: str
 
-    def password_meets_policy1(self):
+    def password_meets_policy1(self) -> bool:
         """Determines whether the password meets the policy of the sled
         rental place down the street"""
         counter = Counter(self.password)
         return self.num1 <= counter[self.letter] <= self.num2
 
-    def password_meets_policy2(self):
+    def password_meets_policy2(self) -> bool:
         """Determines whether the password meets the policy of the Official
         Toboggan Corporate Authentication System"""
         return (self.password[self.num1 - 1] == self.letter) ^ (
