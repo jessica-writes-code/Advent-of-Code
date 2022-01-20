@@ -28,7 +28,7 @@ class Day6Solver(Solver):
         sum these numbers across groups"""
         return sum(
             [
-                len([v for _, v in Counter("".join(group)).items() if v == len(group)])
+                sum([v == len(group) for _, v in Counter("".join(group)).items()])
                 for group in self.groups
             ]
         )
