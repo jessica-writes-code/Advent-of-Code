@@ -1,4 +1,5 @@
-from xxlimited import new
+from typing import Callable
+
 import numpy as np
 
 from _base import Solver
@@ -10,87 +11,132 @@ class Day11Solver(Solver):
         super().__init__(file_path)
         self.input = np.array([list(x) for x in self.raw_input])
 
-    def _find_final_seats_occupied():
-        pass  # TODO: Use this to generalize code
+    def _find_final_seats_occupied(
+        self,
+        number_occupied_fn: Callable[[int, int, np.ndarray], int],
+        max_occupied: int,
+    ) -> int:
+        """Find the number of occupied seats, once the process of taking/abandoning
+        seats has reached stability. The process is such that:
+            (1) if an empty seat has no occupied, adjacent seats, it becomes occupied
+            (2) if an occupied seat has too many occupied, adjacent seats, it becomes
+                empty
+        The definition of adjacent varies and is specified by the `number_occupied_fn`.
 
-    def solve_part1(self) -> int:
-        """Find the number of seats that are occupied once the process of seat
-        movement reaches stability"""
+        Args:
+            number_occupied_fn: Callable[[int, int, np.ndarray], int] - function to
+                determine the number of occupied seats adjacent to a particular seat,
+                given a particular layout
+            max_occupied: int - maximum number of adjacent, occupied seats that an
+                individual person will find acceptable
+
+        Returns:
+            int - number of occupied seats, once the layout stops changing
+        """
         layout, new_layout = self.input.copy(), None
 
         while not (layout == new_layout).all():
             if new_layout is not None:
-                layout = new_layout.copy()  # Layout is the "New Layout" from the last iteration
-            new_layout = layout.copy()
-
-            for iy, ix in np.ndindex(layout.shape):
-                current_seat_status = layout[iy, ix]
-                
-                # Get the patch of seats surrounding the seat of interest,
-                # where the seat of interest is marked with a 'C'
-                min_y, max_y = max(0, iy - 1), min(layout.shape[0] - 1, iy + 1)
-                min_x, max_x = max(0, ix - 1), min(layout.shape[1] - 1, ix + 1)
-                layout[iy][ix] = 'C'
-                patch = layout[min_y:max_y+1, min_x:max_x+1].copy()
-                layout[iy][ix] = current_seat_status
-                
-                num_adjacent_occupied_seats = np.sum(patch == '#')
-
-                # Rule 1: If a seat is empty (L) and there are no occupied seats adjacent to it,
-                # the seat becomes occupied.
-                if current_seat_status == 'L' and num_adjacent_occupied_seats == 0:
-                    new_layout[iy, ix] = '#'
-
-                # Rule 2: If a seat is occupied (#) and four or more seats adjacent to it are also
-                # occupied, the seat becomes empty.
-                if current_seat_status == '#' and num_adjacent_occupied_seats >= 4:
-                    new_layout[iy, ix] = 'L'
-
-        return np.sum(layout == '#')
-            
-
-    def solve_part2(self) -> int:
-        """TODO"""
-        layout, new_layout = self.input.copy(), None
-
-        while not (layout == new_layout).all():
-            if new_layout is not None:
-                layout = new_layout.copy()  # Layout is the "New Layout" from the last iteration
+                layout = (
+                    new_layout.copy()
+                )  # Layout is the "New Layout" from the last iteration
             new_layout = layout.copy()
 
             for iy, ix in np.ndindex(layout.shape):
                 current_seat_status = layout[iy, ix]
                 if current_seat_status == '.':
-                    continue  # Don't bother evaluating the floor
-                
-                # Find number of occupied seats that can be seen
-                # TODO: First seat seen! Not any seat...
-                num_adjacent_occupied_seats = sum(
-                    [
-                        (layout[iy][0:ix] == '#').any(),  # Left
-                        (layout[iy][ix+1:] == '#').any(),  # Right
-                        (layout[0:iy][:,ix] == '#').any(),  # Above
-                        (layout[iy+1:][:,ix] == '#').any(),  # Below
-                        (np.flip(layout[0:iy][:,0:ix]).diagonal() == '#').any(),  # Upper-left diagonal
-                        (np.rot90(layout[0:iy][:,ix+1:], k=3).diagonal() == '#').any(),  # Upper-right diagonal
-                        (np.rot90(layout[iy+1:][:,0:ix]).diagonal() == '#').any(),  # Lower-left diagonal
-                        (layout[iy+1:][:,ix+1:].diagonal() == '#').any(),  # Lower-right diagonal
-                    ]
-                )
-                
+                    continue
+                number_occupied = number_occupied_fn(iy, ix, layout)
+
                 # Rule 1: If a seat is empty (L) and there are no occupied seats adjacent to it,
                 # the seat becomes occupied.
-                if current_seat_status == 'L' and num_adjacent_occupied_seats == 0:
-                    new_layout[iy, ix] = '#'
+                if current_seat_status == "L" and number_occupied == 0:
+                    new_layout[iy, ix] = "#"
 
-                # Rule 2: TODO
-                if current_seat_status == '#' and num_adjacent_occupied_seats >= 5:
-                    new_layout[iy, ix] = 'L'
+                # Rule 2: If a seat is occupied (#) and `max_occupied` or more seats adjacent to
+                # it are also occupied, the seat becomes empty.
+                if current_seat_status == "#" and number_occupied >= max_occupied:
+                    new_layout[iy, ix] = "L"
 
-            import pdb
-            pdb.set_trace()
+        return np.sum(layout == "#")
 
-        return np.sum(layout == '#')
+    def solve_part1(self) -> int:
+        def num_adjacent_fn1(y: int, x: int, current_layout: np.ndarray) -> int:
+            """Determine the number of occupied seats immediately next to a seat of
+            interest, where 'next to' can be above, below, left, right, or diagonal
+            
+            Args:
+                y: int - y value of seat of interest
+                x: int - x value of seat of interest
+                current_layout: np.ndarray - current layout of seats
+
+            Returns:
+                int - number of occupied seats immediately next to seat of interest
+            """
+            # Get the patch of seats surrounding the seat of interest,
+            # where the seat of interest is marked with a 'C'
+            current_layout = current_layout.copy()
+            current_layout[y][x] = "C"
+
+            min_y, max_y = max(0, y - 1), min(current_layout.shape[0] - 1, y + 1)
+            min_x, max_x = max(0, x - 1), min(current_layout.shape[1] - 1, x + 1)
+            patch = current_layout[min_y : max_y + 1, min_x : max_x + 1].copy()
+
+            # Count occupied seats in patch (not including seat of interest)
+            return np.sum(patch == "#")
+
+        return self._find_final_seats_occupied(num_adjacent_fn1, 4)
+
+    def solve_part2(self) -> int:
+
+        def _occupied_first(line_of_sight: np.ndarray) -> bool:
+            for entry in line_of_sight:
+                if entry == '#':
+                    return True
+                elif entry == 'L':
+                    return False
+            return False
+
+        def num_adjacent_fn2(y: int, x: int, current_layout: np.ndarray) -> int:
+            """TODO"""
+            count = 0
+
+            # Above
+            if y > 0:
+                count += _occupied_first(np.flip(current_layout[0:y,x]))
+
+            # Below
+            if y < current_layout.shape[0] - 1:
+                count += _occupied_first(current_layout[y+1:,x])
+
+            # Left
+            if x > 0:
+                count += _occupied_first(np.flip(current_layout[y,0:x]))
+
+            # Right
+            if x < current_layout.shape[1] - 1:
+                count += _occupied_first(current_layout[y,x+1:])
+
+            # Diagonals
+            # - Upper left
+            if y > 0 and x > 0:
+                count += _occupied_first(np.flip(current_layout[0:y,0:x]).diagonal())
+
+            # - Upper right
+            if y > 0 and x < current_layout.shape[1] - 1:
+                count += _occupied_first(np.flipud(current_layout[0:y,x+1:]).diagonal())
+
+            # - Lower left
+            if y < current_layout.shape[0] - 1 and x > 0:
+                count += _occupied_first(np.fliplr(current_layout[y+1:,0:x]).diagonal())
+
+            # - Lower right
+            if y < current_layout.shape[0] - 1 and x < current_layout.shape[1] - 1:
+                count += _occupied_first(current_layout[y+1:,x+1:].diagonal())
+            
+            return count
+
+        return self._find_final_seats_occupied(num_adjacent_fn2, 5)
 
 
 solver = Day11Solver("./input/Day11Input.txt")
