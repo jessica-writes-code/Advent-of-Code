@@ -61,6 +61,7 @@ class Day11Solver(Solver):
         return np.sum(layout == "#")
 
     def solve_part1(self) -> int:
+
         def num_adjacent_fn1(y: int, x: int, current_layout: np.ndarray) -> int:
             """Determine the number of occupied seats immediately next to a seat of
             interest, where 'next to' can be above, below, left, right, or diagonal
@@ -91,10 +92,8 @@ class Day11Solver(Solver):
 
         def _occupied_first(line_of_sight: np.ndarray) -> bool:
             for entry in line_of_sight:
-                if entry == '#':
-                    return True
-                elif entry == 'L':
-                    return False
+                if entry != '.':
+                    return entry == '#'
             return False
 
         def num_adjacent_fn2(y: int, x: int, current_layout: np.ndarray) -> int:
@@ -102,24 +101,24 @@ class Day11Solver(Solver):
             from a seat of interest. Occupied seats cannot be seen 'through' empty seats.
             
             Args:
-                TODO
+                y: int - y value of seat of interest
+                x: int - x value of seat of interest
+                current_layout: np.ndarray - current layout of seats
 
             Returns:
                 int - the number of occupied seats that can be seen from a seat of interest
             """
             count = 0
 
-            # Vertical
-            vertical = current_layout[:,x]
+            # Vertical & Horizontal
+            vertical, horizontal = current_layout[:,x], current_layout[y,:]
             count += _occupied_first(np.flip(vertical[0:y]))  # Above
             count += _occupied_first(vertical[y+1:])  # Below
-
-            # Horizontal
-            horizontal = current_layout[y,:]
             count += _occupied_first(np.flip(horizontal[0:x]))  # Left
             count += _occupied_first(horizontal[x+1:])  # Right
 
             # Diagonals
+            # TODO: Clean up
             # - Upper left
             if y > 0 and x > 0:
                 count += _occupied_first(np.flip(current_layout[0:y,0:x]).diagonal())
