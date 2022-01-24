@@ -98,24 +98,26 @@ class Day11Solver(Solver):
             return False
 
         def num_adjacent_fn2(y: int, x: int, current_layout: np.ndarray) -> int:
-            """TODO"""
+            """Determine the number of occupied seats that can be seen (in any direction)
+            from a seat of interest. Occupied seats cannot be seen 'through' empty seats.
+            
+            Args:
+                TODO
+
+            Returns:
+                int - the number of occupied seats that can be seen from a seat of interest
+            """
             count = 0
 
-            # Above
-            if y > 0:
-                count += _occupied_first(np.flip(current_layout[0:y,x]))
+            # Vertical
+            vertical = current_layout[:,x]
+            count += _occupied_first(np.flip(vertical[0:y]))  # Above
+            count += _occupied_first(vertical[y+1:])  # Below
 
-            # Below
-            if y < current_layout.shape[0] - 1:
-                count += _occupied_first(current_layout[y+1:,x])
-
-            # Left
-            if x > 0:
-                count += _occupied_first(np.flip(current_layout[y,0:x]))
-
-            # Right
-            if x < current_layout.shape[1] - 1:
-                count += _occupied_first(current_layout[y,x+1:])
+            # Horizontal
+            horizontal = current_layout[y,:]
+            count += _occupied_first(np.flip(horizontal[0:x]))  # Left
+            count += _occupied_first(horizontal[x+1:])  # Right
 
             # Diagonals
             # - Upper left
