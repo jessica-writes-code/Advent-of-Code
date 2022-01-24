@@ -44,7 +44,7 @@ class Day11Solver(Solver):
 
             for iy, ix in np.ndindex(layout.shape):
                 current_seat_status = layout[iy, ix]
-                if current_seat_status == '.':
+                if current_seat_status == ".":
                     continue
                 number_occupied = number_occupied_fn(iy, ix, layout)
 
@@ -61,7 +61,6 @@ class Day11Solver(Solver):
         return np.sum(layout == "#")
 
     def solve_part1(self) -> int:
-
         def num_adjacent_fn1(y: int, x: int, current_layout: np.ndarray) -> int:
             """Determine the number of occupied seats immediately next to a seat of
             interest, where 'next to' can be above, below, left, right, or diagonal
@@ -89,11 +88,10 @@ class Day11Solver(Solver):
         return self._find_final_seats_occupied(num_adjacent_fn1, 4)
 
     def solve_part2(self) -> int:
-
         def _occupied_first(line_of_sight: np.ndarray) -> bool:
             for entry in line_of_sight:
-                if entry != '.':
-                    return entry == '#'
+                if entry != ".":
+                    return entry == "#"
             return False
 
         def num_adjacent_fn2(y: int, x: int, current_layout: np.ndarray) -> int:
@@ -111,19 +109,26 @@ class Day11Solver(Solver):
             count = 0
 
             # Vertical & Horizontal
-            vertical, horizontal = current_layout[:,x], current_layout[y,:]
+            vertical, horizontal = current_layout[:, x], current_layout[y, :]
             count += _occupied_first(np.flip(vertical[0:y]))  # Above
-            count += _occupied_first(vertical[y+1:])  # Below
+            count += _occupied_first(vertical[y + 1 :])  # Below
             count += _occupied_first(np.flip(horizontal[0:x]))  # Left
-            count += _occupied_first(horizontal[x+1:])  # Right
+            count += _occupied_first(horizontal[x + 1 :])  # Right
 
             # Diagonals
-            # TODO: Clean up
-            count += _occupied_first(np.flip(current_layout[0:y,0:x]).diagonal())  # Upper left
-            count += _occupied_first(np.flipud(current_layout[0:y,x+1:]).diagonal())  # Upper right
-            count += _occupied_first(np.fliplr(current_layout[y+1:,0:x]).diagonal())  # Lower left
-            count += _occupied_first(current_layout[y+1:,x+1:].diagonal())  # Lower right
-            
+            count += _occupied_first(
+                np.flip(current_layout[0:y, 0:x]).diagonal()
+            )  # Upper left
+            count += _occupied_first(
+                np.flipud(current_layout[0:y, x + 1 :]).diagonal()
+            )  # Upper right
+            count += _occupied_first(
+                np.fliplr(current_layout[y + 1 :, 0:x]).diagonal()
+            )  # Lower left
+            count += _occupied_first(
+                current_layout[y + 1 :, x + 1 :].diagonal()
+            )  # Lower right
+
             return count
 
         return self._find_final_seats_occupied(num_adjacent_fn2, 5)
