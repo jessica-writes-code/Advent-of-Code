@@ -119,21 +119,10 @@ class Day11Solver(Solver):
 
             # Diagonals
             # TODO: Clean up
-            # - Upper left
-            if y > 0 and x > 0:
-                count += _occupied_first(np.flip(current_layout[0:y,0:x]).diagonal())
-
-            # - Upper right
-            if y > 0 and x < current_layout.shape[1] - 1:
-                count += _occupied_first(np.flipud(current_layout[0:y,x+1:]).diagonal())
-
-            # - Lower left
-            if y < current_layout.shape[0] - 1 and x > 0:
-                count += _occupied_first(np.fliplr(current_layout[y+1:,0:x]).diagonal())
-
-            # - Lower right
-            if y < current_layout.shape[0] - 1 and x < current_layout.shape[1] - 1:
-                count += _occupied_first(current_layout[y+1:,x+1:].diagonal())
+            count += _occupied_first(np.flip(current_layout[0:y,0:x]).diagonal())  # Upper left
+            count += _occupied_first(np.flipud(current_layout[0:y,x+1:]).diagonal())  # Upper right
+            count += _occupied_first(np.fliplr(current_layout[y+1:,0:x]).diagonal())  # Lower left
+            count += _occupied_first(current_layout[y+1:,x+1:].diagonal())  # Lower right
             
             return count
 
