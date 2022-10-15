@@ -1,6 +1,5 @@
 # Problem: https://adventofcode.com/2019/day/5
 
-from turtle import position
 from typing import List
 
 
